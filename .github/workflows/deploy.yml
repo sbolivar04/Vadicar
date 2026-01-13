@@ -34,18 +34,20 @@ jobs:
         run: npm ci
 
       - name: Construir Proyecto
+        # AQUI AGREGAMOS LAS VARIABLES PARA QUE VITE LAS VEA
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: Configurar Pages
         uses: actions/configure-pages@v4
       
-      # Este paso es el que fallaba, ahora usamos v3
       - name: Subir Artefactos
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
       
-      # Y este el despliegue final, ahora v4
       - name: Desplegar a GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
