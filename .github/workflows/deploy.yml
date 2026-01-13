@@ -34,11 +34,13 @@ jobs:
         run: npm ci
 
       - name: Construir Proyecto
-        # AQUI AGREGAMOS LAS VARIABLES PARA QUE VITE LAS VEA
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
+
+      - name: Crear archivo 404 para React Router
+        run: cp dist/index.html dist/404.html
 
       - name: Configurar Pages
         uses: actions/configure-pages@v4
