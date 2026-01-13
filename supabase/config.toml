@@ -1,0 +1,24 @@
+# Invirtiendo el orden para intentar evitar el bug de la CLI.
+
+[auth]
+# Es crucial que este secreto sea largo y difícil de adivinar.
+# Puedes generar uno en https://supabase.com/docs/guides/cli/jwt-secret-generator
+jwt_secret = "tu-secreto-jwt-super-secreto-y-largo"
+
+[studio]
+port = 39997
+
+[api]
+port = 39998
+
+[db]
+port = 39999
+shadow_port = 39992
+
+[db.pooler]
+port = 39993
+
+[inbucket]
+port = 39996
+smtp_port = 39995
+pop3_port = 39994

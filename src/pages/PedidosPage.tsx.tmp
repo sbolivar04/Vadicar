@@ -1,0 +1,84 @@
+  const handleSelectFlow = async (flow: 'OJAL' | 'PLANCHADO') => {
+    setIsFlowDecisionModalOpen(false);
+    setLoading(true);
+
+    try {
+      // 1. Obtener el ID de la etapa de REVISIÓN
+      const { data: etapaRevision } = await supabase
+        .from('etapas')
+        .select('id')
+        .eq('codigo', 'REVISION')
+        .single();
+
+      if (!etapaRevision) throw new Error("No se encontró la etapa de Revisión");
+
+      // 2. Buscar Órdenes que están en el historial con ES_ACTUAL = TRUE para la etapa de Revisión
+      const { data: historyData, error: historyError } = await supabase
+        .from('historial_ordenes_de_trabajo')
+        .select(`
+          es_actual,
+          id_orden_trabajo (
+            id,
+            cantidad_asignada,
+            id_referencia (id, nombre, imagen_url),
+            id_talla (id, nombre),
+            id_taller,
+            id_pedido,
+            estado
+          )
+        `)
+        .eq('id_pedido', selectedOrder?.id)
+        .eq('id_etapa', etapaRevision.id)
+        .eq('es_actual', true);
+
+      if (historyError) throw historyError;
+
+      // 3. Filtrar manualmente para asegurar que pertenecen al taller activo y están aprobadas (completadas)
+      const validOrders = (historyData || [])
+        .map((h: any) => h.id_orden_trabajo)
+        .filter((wo: any) => 
+          wo && 
+          wo.id_taller === activeTallerIdForRevision && 
+          wo.estado === 'completada'
+        );
+
+      if (!validOrders || validOrders.length === 0) {
+        alert("No se encontraron prendas aprobadas pendientes de asignación para este taller.");
+        setLoading(false);
+        return;
+      }
+
+      // 4. Formatear datos para los modales
+      const formattedData = validOrders.map((wo: any) => {
+        const ref = Array.isArray(wo.id_referencia) ? wo.id_referencia[0] : wo.id_referencia;
+        const talla = Array.isArray(wo.id_talla) ? wo.id_talla[0] : wo.id_talla;
+        return {
+          id_referencia: ref.id,
+          nombre_referencia: ref.nombre,
+          imagen_url: ref.imagen_url,
+          id_talla: talla.id,
+          nombre_talla: talla.nombre,
+          cantidad_aprobada: wo.cantidad_asignada
+        };
+      });
+
+      if (flow === 'OJAL') {
+        const idEtapaOjal = etapas.find(e => e.codigo === 'OJAL_BOTON')?.id;
+        setApprovedGarments(formattedData);
+        setModalAsignacionConfig({
+          labor: 'Ojal y Botón',
+          etapaDestinoId: idEtapaOjal || null
+        });
+        setIsAsignarProduccionModalOpen(true);
+      } else {
+        setPlanchadoAssignmentData(formattedData);
+        setTallerIdForPlanchadoSource(activeTallerIdForRevision);
+        setIsAsignarPlanchadoModalOpen(true);
+      }
+    } catch (err: any) {
+      console.error("Error consolidando prendas aprobadas:", err);
+      alert(`Error al cargar prendas: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
