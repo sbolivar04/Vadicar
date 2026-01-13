@@ -22,10 +22,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Instalar Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
@@ -36,11 +36,16 @@ jobs:
       - name: Construir Proyecto
         run: npm run build
 
-      - name: Subir a GitHub Pages
-        uses: actions/configure-pages@v3
+      - name: Configurar Pages
+        uses: actions/configure-pages@v4
       
-      - uses: actions/upload-pages-artifact@v1
+      # Este paso es el que fallaba, ahora usamos v3
+      - name: Subir Artefactos
+        uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
       
-      - uses: actions/deploy-pages@v1
+      # Y este el despliegue final, ahora v4
+      - name: Desplegar a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
